@@ -1,0 +1,10 @@
+secret:
+  key: 58703273357638792F423F4528482B4D6250655368566D597133743677397A24
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
