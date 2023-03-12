@@ -27,29 +27,19 @@ public class ImageController {
     @Autowired
     ImageService imageService;
 
-//    @PostMapping("upload")
-//    public ResponseEntity<?> uploadImage(@RequestBody MultipartFile file) throws Exception {
-//        imageService.uploadImage(file);
-//        return ResponseEntity.status(HttpStatus.OK)
-//                .body("Image uploaded successfully: " +
-//                        file.getOriginalFilename());
-//    }
-//
-    @GetMapping("/get/{name}")
+    @GetMapping("/get")
     public ResponseEntity<Resource> getImageDetails(@RequestParam("name") String name) throws Exception {
         var image = imageService.findImageByName(name);
         List<MediaType> type = new ArrayList<>();
         type.add(MediaType.IMAGE_JPEG);
         type.add(MediaType.IMAGE_PNG);
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(type);
+        headers.add(HttpHeaders.CONTENT_TYPE, "image/png");
+        headers.add(HttpHeaders.CONTENT_TYPE, "image/jpeg");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"");
         return new ResponseEntity<>(image, headers, HttpStatus.OK);
     }
-//
-//    @GetMapping("/allimages")
-//    public void getAllImage(){
-//        imageService.getAllImages();
-//    }
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(
             @RequestParam(name = "file", required = true) MultipartFile[] file,

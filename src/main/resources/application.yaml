@@ -15,6 +15,5 @@ spring:
 
 extern:
   resoures:
-    path: D:/resources/
+    path: E:/resources/
     Dir: resources
-

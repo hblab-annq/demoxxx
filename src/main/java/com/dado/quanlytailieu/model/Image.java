@@ -1,5 +1,6 @@
 package com.dado.quanlytailieu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,8 +23,9 @@ public class Image {
     String fileName;
     String type;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "file_id")
+    @JsonIgnore
     FileEntity fileEntity;
 
     String createdUser;

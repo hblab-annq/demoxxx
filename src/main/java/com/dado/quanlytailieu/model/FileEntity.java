@@ -20,7 +20,7 @@ public class FileEntity {
 
     private String url;
 
-    @OneToMany(mappedBy = "fileEntity", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "fileEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Image> imageList;
 
     private String createdUser;

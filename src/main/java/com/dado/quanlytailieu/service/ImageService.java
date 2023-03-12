@@ -11,7 +11,9 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.dado.quanlytailieu.model.Image;
 import com.dado.quanlytailieu.repository.FileRepository;
@@ -20,6 +22,7 @@ import com.dado.quanlytailieu.repository.ImageRepository;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -35,51 +38,21 @@ public class ImageService {
     @Autowired
     FileRepository fileRepository;
 
-//    public Image uploadImage(MultipartFile file) throws Exception {
-//        if(file.getSize() <= 0){
-//            throw new Exception("File size is 0");
-//        }
-//        return imageRepository.save(Image.builder()
-//                .fileName(file.getOriginalFilename())
-//                .type(file.getContentType())
-//                .image(ImageUtil.compressImage(file.getBytes()))
-//                .createdTime(LocalDateTime.now()).build());
-//    }
-//
-//    public Image getImageById(String id) throws Exception {
-//        var image = imageRepository.findById(Long.valueOf(id))
-//                .orElseThrow(
-//                        () -> new Exception("Image with id: " + id + " not exist!"));
-//        return image;
-//    }
-//
-    public Resource findImageByName(String name) throws MalformedURLException {
-        Path imagePath = Paths.get("uploads/files" + name);
+    public Resource findImageByName(String name) throws IOException {
+        Path imagePath = Paths.get("uploads/files/" + name);
         File folder = new File("uploads/files");
-        var image = imageRepository.getImageByFileName();
+        var image = imageRepository.getImageByFileName(name);
         Resource imageResource = null;
 
         File[] listOfFiles = folder.listFiles();
-        List<String> listOfFileNames = new ArrayList<>();
         for (int i = 0; i < listOfFiles.length; i++) {
-            if (listOfFiles[i].isDirectory()) {
+
                 if(listOfFiles[i].getName().equals(image.getFileName())){
                     imageResource = new UrlResource(imagePath.toUri());
                 }
-            }
         }
         return imageResource;
     }
-
-//    @GetMapping("/images/{imageName}")
-//    public ResponseEntity<Resource> getImage(@PathVariable String imageName) throws IOException {
-//        Path imagePath = Paths.get("/path/to/" + imageName);
-//        Resource imageResource = new UrlResource(imagePath.toUri());
-//        return ResponseEntity.ok()
-//                .contentType(MediaType.IMAGE_JPEG)
-//                .body(imageResource);
-//    }
-
 
     @Autowired
     public void ImageService(Environment env) {
@@ -104,17 +77,30 @@ public class ImageService {
     }
 
     public String storeFile(MultipartFile[] files, String id) throws Exception {
+        boolean hasDuplicate = false;
+        Set<String> set = new HashSet<>();
         List<String> fileNames = new ArrayList<>();
         for (MultipartFile file: files) {
             if(file.getSize() <= 0){
                 throw new Exception("File size is 0");
+            }else if (!set.add(file.getOriginalFilename())){
+                hasDuplicate = true;
+                throw new Exception("File name is duplicate");
             } else {
                 var fileEntity = fileRepository.findById(Long.valueOf(id)).orElseThrow(()-> new Exception("File not exist!"));
-                var image = imageRepository.save(Image.builder()
+                var imageInfo = imageRepository.getImageByFileId(fileEntity.getId(),file.getOriginalFilename());
+                if(imageInfo != null){
+                    if(imageInfo.getFileName().equals(file.getOriginalFilename())){
+                        throw new Exception("Image is exist");
+                    }
+                }
+                var imageEntity = Image.builder()
                         .fileName(file.getOriginalFilename())
                         .type(file.getContentType())
-                        .createdTime(LocalDateTime.now()).build());
-                fileEntity.getImageList().add(image);
+                        .createdTime(LocalDateTime.now())
+                        .fileEntity(fileEntity).build();
+                imageRepository.save(imageEntity);
+
                 // Normalize file name
                 String fileName = file.getOriginalFilename();
                 try {
