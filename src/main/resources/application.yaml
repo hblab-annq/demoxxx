@@ -8,3 +8,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 220MB
+
+extern:
+  resoures:
+    path: D:/resources/
+    Dir: resources
+

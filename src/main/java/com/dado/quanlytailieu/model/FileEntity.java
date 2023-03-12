@@ -13,21 +13,17 @@ import java.util.List;
 public class FileEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    String name;
+    private String name;
 
-    String url;
+    private String url;
 
     @OneToMany(mappedBy = "fileEntity", cascade = CascadeType.ALL)
-    List<Image> imageList;
+    private List<Image> imageList;
 
-    String createdUser;
+    private String createdUser;
 
-    LocalDateTime createdTime;
-
-    public FileEntity(String name) {
-
-    }
+    private LocalDateTime createdTime;
 }
