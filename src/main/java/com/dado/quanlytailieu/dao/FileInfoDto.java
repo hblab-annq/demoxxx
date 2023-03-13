@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class FileInfoDto {
+    long id;
     String fileName;
     String createdUser;
 }

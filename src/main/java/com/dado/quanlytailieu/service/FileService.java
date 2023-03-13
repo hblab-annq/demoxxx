@@ -3,19 +3,24 @@ package com.dado.quanlytailieu.service;
 import com.dado.quanlytailieu.dao.FileInfoDto;
 import com.dado.quanlytailieu.dao.FileUploadDto;
 import com.dado.quanlytailieu.model.FileEntity;
+import com.dado.quanlytailieu.dto.ResponseDto;
 import com.dado.quanlytailieu.repository.FileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,9 +35,13 @@ public class FileService {
     @Autowired
     private ResourceLoader resourceLoader;
 
-    public List<FileInfoDto> getAllFileName() {
+    public ResponseDto getAllFileName() {
         List<FileEntity> fileEntityList = fileRepository.findAll();
-        return fileEntityList.stream().map(file -> new FileInfoDto(file.getName(), file.getCreatedUser())).collect(Collectors.toList());
+        var listFile = fileEntityList.stream().map(file -> new FileInfoDto(file.getId(), file.getName(), file.getCreatedUser())).collect(Collectors.toList());
+        return ResponseDto.builder()
+                .message("Successfully")
+                .httpCode(HttpStatus.OK)
+                .body(listFile).build();
     }
 
     public FileEntity uploadFile(FileUploadDto fileUploadDTO, String createdUser) throws IOException {
@@ -69,16 +78,18 @@ public class FileService {
         return fileEntity;
     }
 
-    public ResponseEntity<Resource> downloadFile(Long fileId) throws FileNotFoundException {
+    public ResponseEntity<?> downloadFile(Long fileId) {
 
-        FileEntity file = fileRepository.findById(fileId).orElseThrow(FileNotFoundException::new);
-
+        var file = fileRepository.findById(fileId).orElse(null);
+        if(file == null) {
+            return ResponseEntity.badRequest().body("File not exist!");
+        }
         String filePath = path + "/" + file.getName();
 
         Resource resource = null;
         resource = resourceLoader.getResource("file:" + filePath);
         if (!resource.exists()) {
-            throw new FileNotFoundException();
+            return ResponseEntity.badRequest().body("File resource exist!");
         }
 
         return ResponseEntity.ok()

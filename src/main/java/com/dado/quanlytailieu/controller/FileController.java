@@ -1,20 +1,17 @@
 package com.dado.quanlytailieu.controller;
 
-import com.dado.quanlytailieu.dao.FileInfoDto;
 import com.dado.quanlytailieu.dao.FileUploadDto;
+import com.dado.quanlytailieu.dto.ResponseDto;
 import com.dado.quanlytailieu.model.FileEntity;
-import com.dado.quanlytailieu.repository.FileRepository;
 import com.dado.quanlytailieu.service.FileService;
 import com.dado.quanlytailieu.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/files")
@@ -27,8 +24,12 @@ public class FileController {
     private JwtService jwtService;
 
     @GetMapping("/all")
-    public ResponseEntity<List<FileInfoDto>> getAllFileName() {
-        return ResponseEntity.ok(fileService.getAllFileName());
+    public ResponseDto getAllFileName() {
+        var files = fileService.getAllFileName();
+        return ResponseDto.builder()
+                .message("Successfully!")
+                .httpCode(HttpStatus.OK)
+                .body(files.getBody()).build();
     }
 
     @PostMapping("/upload")
@@ -40,7 +41,7 @@ public class FileController {
     }
 
     @GetMapping("/download/{fileId}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) throws FileNotFoundException {
+    public ResponseEntity<?> downloadFile(@PathVariable Long fileId) throws FileNotFoundException {
         return fileService.downloadFile(fileId);
     }
 

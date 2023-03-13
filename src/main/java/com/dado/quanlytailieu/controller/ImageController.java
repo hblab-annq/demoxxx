@@ -1,25 +1,21 @@
 package com.dado.quanlytailieu.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.dado.quanlytailieu.model.Image;
+import com.dado.quanlytailieu.command.ImageUpdateCommand;
+import com.dado.quanlytailieu.command.ImageUploadCommand;
+import com.dado.quanlytailieu.dto.ResponseDto;
 import com.dado.quanlytailieu.service.ImageService;
-import jdk.jfr.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/images")
@@ -27,25 +23,48 @@ public class ImageController {
     @Autowired
     ImageService imageService;
 
-    @GetMapping("/get")
-    public ResponseEntity<Resource> getImageDetails(@RequestParam("name") String name) throws Exception {
+    @GetMapping("/download")
+    public ResponseEntity getImageDetails(@RequestParam("name") String name) throws Exception {
         var image = imageService.findImageByName(name);
-        List<MediaType> type = new ArrayList<>();
-        type.add(MediaType.IMAGE_JPEG);
-        type.add(MediaType.IMAGE_PNG);
+        if(image.getBody() == null){
+            return ResponseEntity.badRequest().body(image.getMessage());
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, "image/png");
         headers.add(HttpHeaders.CONTENT_TYPE, "image/jpeg");
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"");
-        return new ResponseEntity<>(image, headers, HttpStatus.OK);
+        return new ResponseEntity(image.getBody(), headers, HttpStatus.OK);
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(
-            @RequestParam(name = "file", required = true) MultipartFile[] file,
-            @RequestParam(name= "idFile", required = true) String id
-    ) throws Exception {
-        String fileName = imageService.storeFile(file, id);
-        return ResponseEntity.ok().body("Image uploaded successfully");
+    public ResponseDto uploadFile(@ModelAttribute ImageUploadCommand command) throws Exception {
+        var fileName = imageService.storeFile(command.getFiles(), command.getId());
+        return ResponseDto.builder()
+                .message(fileName.getMessage())
+                .httpCode(fileName.getHttpCode()).build();
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseDto deleteImageById(@RequestParam(name = "id", required = true) String id) throws Exception {
+        var image = imageService.deleteImageById(id);
+        return ResponseDto.builder()
+                .message(image.getMessage())
+                .httpCode(image.getHttpCode())
+                .body(image.getBody()).build();
+    }
+
+    @PutMapping("/update")
+    public ResponseDto updateImageById(
+            @ModelAttribute ImageUpdateCommand command) throws Exception {
+        var image = imageService.updateImage(command.getId()
+                , command.getCreatedTime()
+                , command.getCreatedUser()
+                , command.getFile()
+                , command.getFileId());
+
+        return ResponseDto.builder()
+                .message(image.getMessage())
+                .httpCode(image.getHttpCode())
+                .body(image.getBody()).build();
     }
 }
