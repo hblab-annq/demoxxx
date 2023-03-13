@@ -43,19 +43,7 @@ public class FileController {
 
     @GetMapping("/{fileId}")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) throws FileNotFoundException, MalformedURLException {
-        FileEntity file = fileRepository.findById(fileId).orElseThrow(FileNotFoundException::new);
-
-        String uploadDir = "uploads/";
-        String filePath = uploadDir + file.getId() + "-" + file.getName();
-
-        Resource resource = new UrlResource("file:" + filePath);
-
-        if (!resource.exists()) {
-            throw new FileNotFoundException();
-        }
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
+        return fileService.downloadFile(fileId);
     }
+
 }
