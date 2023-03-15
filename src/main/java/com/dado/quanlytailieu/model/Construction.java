@@ -18,9 +18,9 @@ public class Construction {
     String location;
     ConstructionType type;
 
-    @OneToMany(mappedBy = "construction", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "construction")
     List<Image> images;
 
-    @OneToMany(mappedBy = "construction", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "construction")
     List<ConstructionDocument> constructionDocuments;
 }

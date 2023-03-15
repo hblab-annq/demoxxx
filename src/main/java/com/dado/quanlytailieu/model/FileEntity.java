@@ -22,7 +22,7 @@ public class FileEntity {
     String type;
 
     @ManyToOne
-    @JoinColumn(name = "ho_so_cong_trinh_id")
+    @JoinColumn(name = "document_id")
     ConstructionDocument constructionDocument;
 
     String createdUser;
