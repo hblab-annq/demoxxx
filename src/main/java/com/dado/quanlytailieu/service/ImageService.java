@@ -119,7 +119,7 @@ public class ImageService {
                         .fileName(file.getOriginalFilename())
                         .type(file.getContentType())
                         .createdTime(LocalDateTime.now())
-                        .fileEntity(fileEntity).build();
+                        .build();
                 imageRepository.save(imageEntity);
 
                 // Normalize file name

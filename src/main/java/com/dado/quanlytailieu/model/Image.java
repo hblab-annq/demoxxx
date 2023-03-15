@@ -1,34 +1,32 @@
 package com.dado.quanlytailieu.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    @Column(name = "filename", nullable = true)
+
     String fileName;
+    String url;
+
     String type;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "file_id")
-    @JsonIgnore
-    @ToString.Exclude
-    FileEntity fileEntity;
+    @ManyToOne
+    @JoinColumn(name = "cong_trinh_id")
+    CongTrinh congTrinh;
 
     String createdUser;
 

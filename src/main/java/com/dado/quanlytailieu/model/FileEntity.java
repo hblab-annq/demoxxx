@@ -16,18 +16,19 @@ import java.util.List;
 public class FileEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long id;
 
-    private String name;
+    String fileName;
 
-    private String url;
+    String type;
 
-    @OneToMany(mappedBy = "fileEntity")
-    @JsonIgnore
-    private List<Image> imageList;
+    @ManyToOne
+    @JoinColumn(name = "ho_so_cong_trinh_id")
+    HoSoCongTrinh hoSoCongTrinh;
 
-    private String createdUser;
+    String createdUser;
 
-    private LocalDateTime createdTime;
+    LocalDateTime createdTime;
+
 }
