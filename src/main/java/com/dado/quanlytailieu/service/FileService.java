@@ -1,23 +1,27 @@
 package com.dado.quanlytailieu.service;
 
+import com.dado.quanlytailieu.dao.FileInfoDto;
 import com.dado.quanlytailieu.dao.FileUploadDto;
 import com.dado.quanlytailieu.model.FileEntity;
 import com.dado.quanlytailieu.repository.FileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.MalformedURLException;
+import java.io.*;
+import java.util.List;
 
 @Service
 public class FileService {
+
+    @Value("${extern.resources.path}")
+    private String path;
 
     @Autowired
     private FileRepository fileRepository;
@@ -25,23 +29,18 @@ public class FileService {
     @Autowired
     private ResourceLoader resourceLoader;
 
-    public FileEntity uploadFile(FileUploadDto fileUploadDTO) throws IOException {
+    public List<FileInfoDto> getAllFileName() {
+        List<FileEntity> fileEntityList = fileRepository.findAll();
+        return fileEntityList.stream().map(this::convertFileEntityToFileInfoDto).toList();
+    }
 
-        // Tạo file
-        String filename = StringUtils.cleanPath(fileUploadDTO.getFile().getOriginalFilename());
-        FileEntity fileEntity = new FileEntity(fileUploadDTO.getName() != null ? fileUploadDTO.getName() : filename);
+    public FileEntity uploadFile(FileUploadDto fileUploadDTO, String createdUser) throws IOException {
+        MultipartFile file = fileUploadDTO.getFile();
+        String filename = saveFile(file);
+        FileEntity fileEntity = new FileEntity();
+        fileEntity.setFileName(filename);
+        fileEntity.setCreatedUser(createdUser);
         fileEntity = fileRepository.save(fileEntity);
-
-        String uploadDir = resourceLoader.getResource("classpath:static/uploads/").getFile().getAbsolutePath();
-        File uploadDirFile = new File(uploadDir);
-        if (!uploadDirFile.exists()) {
-            uploadDirFile.mkdir();
-        }
-
-        String filePath = uploadDir + File.separator + fileEntity.getId() + "-" + filename;
-        File dest = new File(filePath);
-        fileUploadDTO.getFile().transferTo(dest);
-
         return fileEntity;
     }
 
@@ -49,8 +48,7 @@ public class FileService {
 
         FileEntity file = fileRepository.findById(fileId).orElseThrow(FileNotFoundException::new);
 
-        String uploadDir = "uploads/";
-        String filePath = uploadDir + file.getId() + "-" + file.getName();
+        String filePath = path + "/" + file.getFileName();
 
         Resource resource = null;
         resource = resourceLoader.getResource("file:" + filePath);
@@ -62,4 +60,51 @@ public class FileService {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
     }
+
+    public FileInfoDto getFileInfo(Long fileId) throws FileNotFoundException {
+        return convertFileEntityToFileInfoDto(fileRepository.findById(fileId).orElseThrow(FileNotFoundException::new));
+    }
+
+    private String decideFullPath(MultipartFile file) {
+        String filename = file.getOriginalFilename();
+        int index = filename.indexOf('.');
+        String extension = filename.substring(index+1).toUpperCase();
+        return path + File.separator + File.separator+ filename;
+    }
+
+    private FileInfoDto convertFileEntityToFileInfoDto(FileEntity file) {
+        return FileInfoDto.builder()
+                .id(file.getId())
+                .fileName(file.getFileName())
+                .build();
+    }
+
+    public String saveFile(MultipartFile file) {
+        if(file.isEmpty())
+        {
+            throw  new RuntimeException("please provide a valide file");
+        }
+
+        InputStream in = null;
+        BufferedOutputStream out = null;
+        try {
+            in = new BufferedInputStream(file.getInputStream());
+            byte[] b = in.readAllBytes();
+            String fullPath = decideFullPath(file);
+            out = new BufferedOutputStream(new FileOutputStream(fullPath));
+            out.write(b);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                in.close();
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return StringUtils.cleanPath(file.getOriginalFilename());
+    }
+
 }

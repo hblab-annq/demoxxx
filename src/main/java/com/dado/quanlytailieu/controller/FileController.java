@@ -1,48 +1,47 @@
 package com.dado.quanlytailieu.controller;
 
 import com.dado.quanlytailieu.dao.FileUploadDto;
+import com.dado.quanlytailieu.dto.ResponseDto;
 import com.dado.quanlytailieu.model.FileEntity;
-import com.dado.quanlytailieu.repository.FileRepository;
 import com.dado.quanlytailieu.service.FileService;
+import com.dado.quanlytailieu.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/files")
 public class FileController {
 
     @Autowired
-    private FileRepository fileRepository;
-
-    @Autowired
     private FileService fileService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<FileEntity> uploadFile(@ModelAttribute FileUploadDto fileUploadDTO) throws IOException {
+    @Autowired
+    private JwtService jwtService;
 
-        // Kiểm tra định dạng file
-        if (!Objects.equals(fileUploadDTO.getFile().getContentType(), "application/pdf") &&
-                !Objects.equals(fileUploadDTO.getFile().getContentType(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        return ResponseEntity.ok(fileService.uploadFile(fileUploadDTO));
+    @GetMapping("/all")
+    public ResponseDto getAllFileName() {
+        var files = fileService.getAllFileName();
+        return ResponseDto.builder()
+                .message("Successfully!")
+                .httpCode(HttpStatus.OK)
+                .body(files.getBody()).build();
     }
 
-    @GetMapping("/{fileId}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) throws FileNotFoundException, MalformedURLException {
+    @PostMapping("/upload")
+    public ResponseEntity<FileEntity> uploadFile(@ModelAttribute FileUploadDto fileUploadDTO, @RequestHeader String authorization) throws IOException {
+        String jwt;
+        jwt = authorization.substring(7);
+        String createdUser = jwtService.extractUsername(jwt);
+        return ResponseEntity.ok(fileService.uploadFile(fileUploadDTO, createdUser));
+    }
+
+    @GetMapping("/download/{fileId}")
+    public ResponseEntity<?> downloadFile(@PathVariable Long fileId) throws FileNotFoundException {
         return fileService.downloadFile(fileId);
     }
 

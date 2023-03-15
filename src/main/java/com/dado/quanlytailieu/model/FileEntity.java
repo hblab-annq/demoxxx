@@ -1,33 +1,32 @@
 package com.dado.quanlytailieu.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class FileEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
 
-    String name;
+    String fileName;
 
-    String url;
+    String type;
 
-    @OneToMany(mappedBy = "fileEntity", cascade = CascadeType.ALL)
-    List<Image> imageList;
+    @ManyToOne
+    @JoinColumn(name = "ho_so_cong_trinh_id")
+    ConstructionDocument constructionDocument;
 
     String createdUser;
 
     LocalDateTime createdTime;
 
-    public FileEntity(String name) {
-
-    }
 }
