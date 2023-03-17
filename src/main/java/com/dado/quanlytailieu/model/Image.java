@@ -33,5 +33,5 @@ public class Image {
     String createdUser;
 
     @CreatedDate
-    LocalDateTime createdTime;
+    LocalDateTime createdTime = LocalDateTime.now();
 }

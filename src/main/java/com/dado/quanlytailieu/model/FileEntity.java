@@ -30,6 +30,6 @@ public class FileEntity {
     String createdUser;
 
     @CreatedDate
-    LocalDateTime createdTime;
+    LocalDateTime createdTime = LocalDateTime.now();
 
 }

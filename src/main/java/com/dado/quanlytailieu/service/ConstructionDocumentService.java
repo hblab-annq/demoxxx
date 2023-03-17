@@ -54,7 +54,6 @@ public class ConstructionDocumentService {
         fileEntity.setFileName(filename);
         fileEntity.setCreatedUser(command.getCreatedUser());
         fileEntity.setType(file.getContentType());
-        fileEntity.setCreatedTime(LocalDateTime.now());
         fileRepository.save(fileEntity);
 
         var construction = constructionRepository.findById(command.getConstructionId()).orElseThrow(()->new Exception("construction not exist"));
@@ -64,7 +63,6 @@ public class ConstructionDocumentService {
         document.setCreatedUser(command.getCreatedUser());
         document.setConstruction(construction);
         document.setFile(fileEntity);
-        document.setCreatedTime(LocalDateTime.now());
         contructionDocumentRepository.save(document);
         return document;
     }

@@ -22,8 +22,8 @@ public class ConstructionDocument {
 
     String createdUser;
 
-    @CreatedDate
-    LocalDateTime createdTime;
+    @CreatedDate()
+    LocalDateTime createdTime = LocalDateTime.now();
 
     @LastModifiedDate
     LocalDateTime updatedTime;

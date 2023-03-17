@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import com.dado.quanlytailieu.dto.ImageDto;
 import com.dado.quanlytailieu.model.Construction;
 import com.dado.quanlytailieu.model.Image;
 import com.dado.quanlytailieu.dto.ResponseDto;
@@ -108,7 +107,6 @@ public class ImageService {
             } else {
                 Image image = new Image();
                 image.setFileName(file.getOriginalFilename());
-                image.setCreatedTime(LocalDateTime.now());
                 image.setType(file.getContentType());
                 image.setCreatedUser("Nam");
                 image.setConstruction(construction);// fix
@@ -164,7 +162,6 @@ public class ImageService {
                 }
                 Image image = new Image();
                 image.setFileName(file.getOriginalFilename());
-                image.setCreatedTime(LocalDateTime.now());
                 image.setType(file.getContentType());
                 image.setCreatedUser("Nam"); // fix
                 image.setConstruction(construction);

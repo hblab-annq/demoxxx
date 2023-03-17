@@ -35,18 +35,6 @@ public class ConstructionService {
     @Autowired
     ConstructionDocumentService constructionDocumentService;
 
-//    public List<ConstructionDto> getAllConstruction() {
-//        var list = constructionRepository.findAll();
-//        return list.stream().map(
-//                entity -> ConstructionDto.builder()
-//                        .name(entity.getName())
-//                        .code(entity.getCode())
-//                        .location(entity.getLocation())
-//                        .type(entity.getType())
-//                        .build()
-//        ).collect(Collectors.toList());
-//    }
-
     public Construction createConstruction(ConstructionCommand command) throws Exception {
         Construction construction = new Construction();
         construction.setName(command.getName());
