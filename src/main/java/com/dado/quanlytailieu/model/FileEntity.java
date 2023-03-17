@@ -5,9 +5,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Data
@@ -23,12 +23,13 @@ public class FileEntity {
 
     String type;
 
-    @ManyToOne
-    @JoinColumn(name = "ho_so_cong_trinh_id")
-    HoSoCongTrinh hoSoCongTrinh;
+    @JsonIgnore
+    @OneToOne(mappedBy = "file")
+    ConstructionDocument constructionDocument;
 
     String createdUser;
 
+    @CreatedDate
     LocalDateTime createdTime;
 
 }

@@ -1,6 +1,6 @@
 package com.dado.quanlytailieu.enums;
 
-public enum TypeCongTrinh {
+public enum ConstructionType {
 
     CONG("Cống"),
     KENH_DAT("Kênh đất"),
@@ -10,7 +10,7 @@ public enum TypeCongTrinh {
     ;
 
     private String type;
-    TypeCongTrinh(String type) {
+    ConstructionType(String type) {
         this.type = type;
     }
 }

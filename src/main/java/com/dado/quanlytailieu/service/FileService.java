@@ -40,6 +40,7 @@ public class FileService {
         FileEntity fileEntity = new FileEntity();
         fileEntity.setFileName(filename);
         fileEntity.setCreatedUser(createdUser);
+        fileEntity.setType(file.getContentType());
         fileEntity = fileRepository.save(fileEntity);
         return fileEntity;
     }

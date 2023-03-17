@@ -2,6 +2,7 @@ package com.dado.quanlytailieu.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 
 import java.nio.file.Path;
@@ -12,10 +13,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
+import com.dado.quanlytailieu.dto.ImageDto;
+import com.dado.quanlytailieu.model.Construction;
 import com.dado.quanlytailieu.model.Image;
 import com.dado.quanlytailieu.dto.ResponseDto;
+import com.dado.quanlytailieu.repository.ConstructionRepository;
 import com.dado.quanlytailieu.repository.FileRepository;
 import com.dado.quanlytailieu.repository.ImageRepository;
 
@@ -37,34 +42,8 @@ public class ImageService {
     @Autowired
     FileRepository fileRepository;
 
-    public ResponseDto findImageByName(String name) throws IOException {
-        Path imagePath = Paths.get("uploads/files/" + name);
-        File folder = new File("uploads/files");
-        var image = imageRepository.getImageByFileName(name);
-        if(image == null){
-            return ResponseDto.builder()
-                    .message("Image doesn't exist!")
-                    .httpCode(HttpStatus.BAD_REQUEST).build();
-        }
-        Resource imageResource = null;
-
-        File[] listOfFiles = folder.listFiles();
-        for (int i = 0; i < listOfFiles.length; i++) {
-
-                if(listOfFiles[i].getName().equals(image.getFileName())){
-                    imageResource = new UrlResource(imagePath.toUri());
-                }
-        }
-        if(imageResource == null) {
-            return ResponseDto.builder()
-                    .message("Cannot get resource of image")
-                    .httpCode(HttpStatus.BAD_REQUEST).build();
-        }
-        return ResponseDto.builder()
-                .message("Get resource successfully")
-                .httpCode(HttpStatus.OK)
-                .body(imageResource).build();
-    }
+    @Autowired
+    ConstructionRepository constructionRepository;
 
     @Autowired
     public void ImageService(Environment env) {
@@ -79,35 +58,103 @@ public class ImageService {
         }
     }
 
-    private String getFileExtension(String fileName) {
-        if (fileName == null) {
+    public Resource downloadImage(String id) throws IOException {
+
+        var image = imageRepository.findById(Long.valueOf(id)).get();
+        if(Objects.isNull(image)){
             return null;
         }
-        String[] fileNameParts = fileName.split("\\.");
+        Path imagePath = Paths.get("uploads/files/" + image.getFileName());
+        File folder = new File("uploads/files");
+        Resource imageResource = null;
 
-        return fileNameParts[fileNameParts.length - 1];
+        File[] listOfFiles = folder.listFiles();
+        for (int i = 0; i < listOfFiles.length; i++) {
+                if(listOfFiles[i].getName().equals(image.getFileName())){
+                    imageResource = new UrlResource(imagePath.toUri());
+                }
+        }
+        if(imageResource == null) {
+            return null;
+        }
+        return imageResource;
     }
 
-    public ResponseDto storeFile(MultipartFile[] files, String id) throws Exception {
+    public List<Resource> getImagePath(String id) throws MalformedURLException {
+        var images = imageRepository.getImageByConstructionId(id);
+        List<Resource> resources = new ArrayList<>();
+        List<Path> paths = new ArrayList<>();
+        for (Image image:images) {
+            Path imagePath = Paths.get("uploads/files/" + image.getFileName());
+            paths.add(imagePath);
+        }
+        File folder = new File("uploads/files");
+        for (Path path:paths) {
+            Resource imageResource = new UrlResource(path.toUri());
+            resources.add(imageResource);
+        }
+        return resources;
+    }
+
+    public List<Image> storeImageForConstruction(MultipartFile[] files, Construction construction) throws Exception {
+        List<Image> images = new ArrayList<>();
+        Set<String> set = new HashSet<>();
+        List<String> fileNames = new ArrayList<>();
+        for (MultipartFile file: files) {
+            if(file.getSize() <= 0){
+                return null;
+            }else if (!set.add(file.getOriginalFilename())){
+                return null;
+            } else {
+                Image image = new Image();
+                image.setFileName(file.getOriginalFilename());
+                image.setCreatedTime(LocalDateTime.now());
+                image.setType(file.getContentType());
+                image.setCreatedUser("Nam");
+                image.setConstruction(construction);// fix
+                imageRepository.save(image);
+                images.add(image);
+
+                // Normalize file name
+                String fileName = file.getOriginalFilename();
+                try {
+                    // Check if the filename contains invalid characters
+                    if (fileName.contains("..")) {
+                        return null;
+                    }
+
+                    Path targetLocation = this.fileStorageLocation.resolve(fileName);
+                    Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+                    fileNames.add(fileName);
+                } catch (IOException ex) {
+                    return null;
+                }
+            }
+        }
+        return images;
+    }
+
+    public ResponseDto storeImage(MultipartFile[] files, String id) throws Exception {
         Set<String> set = new HashSet<>();
         List<String> fileNames = new ArrayList<>();
         for (MultipartFile file: files) {
             if(file.getSize() <= 0){
                 return ResponseDto.builder()
-                        .message("File size < 0!")
+                        .message("Image size < 0!")
                         .httpCode(HttpStatus.BAD_REQUEST).build();
             }else if (!set.add(file.getOriginalFilename())){
                 return ResponseDto.builder()
-                        .message("File name is duplicate!")
+                        .message("Image name is duplicate!")
                         .httpCode(HttpStatus.BAD_REQUEST).build();
             } else {
-                var fileEntity = fileRepository.findById(Long.valueOf(id)).get();
-                if(fileEntity == null){
+                var construction = constructionRepository.findById(Long.valueOf(id)).get();
+                if(Objects.isNull(construction)){
                     return ResponseDto.builder()
-                            .message("File not exist!")
+                            .message("Construction not exist!")
                             .httpCode(HttpStatus.BAD_REQUEST).build();
                 }
-                var imageInfo = imageRepository.getImageByFileId(fileEntity.getId(),file.getOriginalFilename());
+                var imageInfo = imageRepository.getImageByFileId(construction.getId(),file.getOriginalFilename());
                 if(imageInfo != null){
                     if(imageInfo.getFileName().equals(file.getOriginalFilename())){
                         return ResponseDto.builder()
@@ -115,12 +162,13 @@ public class ImageService {
                                 .httpCode(HttpStatus.BAD_REQUEST).build();
                     }
                 }
-                var imageEntity = Image.builder()
-                        .fileName(file.getOriginalFilename())
-                        .type(file.getContentType())
-                        .createdTime(LocalDateTime.now())
-                        .build();
-                imageRepository.save(imageEntity);
+                Image image = new Image();
+                image.setFileName(file.getOriginalFilename());
+                image.setCreatedTime(LocalDateTime.now());
+                image.setType(file.getContentType());
+                image.setCreatedUser("Nam"); // fix
+                image.setConstruction(construction);
+                imageRepository.save(image);
 
                 // Normalize file name
                 String fileName = file.getOriginalFilename();
@@ -128,7 +176,7 @@ public class ImageService {
                     // Check if the filename contains invalid characters
                     if (fileName.contains("..")) {
                         return ResponseDto.builder()
-                                .message("Sorry! Filename contains invalid path sequence " + fileName)
+                                .message("Sorry! Image contains invalid path sequence " + fileName)
                                 .httpCode(HttpStatus.BAD_REQUEST).build();
                     }
 
@@ -138,7 +186,7 @@ public class ImageService {
                     fileNames.add(fileName);
                 } catch (IOException ex) {
                     return ResponseDto.builder()
-                            .message("Could not store file " + fileName)
+                            .message("Could not store image " + fileName)
                             .httpCode(HttpStatus.BAD_REQUEST).build();
                 }
             }
@@ -210,5 +258,10 @@ public class ImageService {
         return ResponseDto.builder()
                 .message("Successfully")
                 .httpCode(HttpStatus.OK).build();
+    }
+
+    public Image getImageById(String id){
+        var image = imageRepository.findById(Long.valueOf(id)).orElse(null);
+        return image;
     }
 }

@@ -4,12 +4,13 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-public class HoSoCongTrinh {
+public class ConstructionDocument {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,14 +25,14 @@ public class HoSoCongTrinh {
     @CreatedDate
     LocalDateTime createdTime;
 
-    @UpdateTimestamp
+    @LastModifiedDate
     LocalDateTime updatedTime;
 
     @ManyToOne
-    @JoinColumn(name = "cong_trinh_id")
-    CongTrinh congTrinh;
+    @JoinColumn(name = "construction_id")
+    Construction construction;
 
     @OneToOne
-    @JoinColumn(name = "file_id")
+    @JoinColumn(name = "file_id",  referencedColumnName = "id")
     FileEntity file;
 }
