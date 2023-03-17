@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +25,7 @@ public class ConstructionDocument {
     @CreatedDate
     LocalDateTime createdTime;
 
-    @UpdateTimestamp
+    @LastModifiedDate
     LocalDateTime updatedTime;
 
     @ManyToOne
@@ -32,6 +33,6 @@ public class ConstructionDocument {
     Construction construction;
 
     @OneToOne
-    @JoinColumn(name = "file_id")
+    @JoinColumn(name = "file_id",  referencedColumnName = "id")
     FileEntity file;
 }

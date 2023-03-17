@@ -83,15 +83,14 @@ public class FileController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createCongTrinh(
+    public ResponseEntity<?> createFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("name") String name,
             @RequestParam("createdUser") String createdUser
     ) {
 
         String filename = fileService.saveFile(file);
         FileEntity fileEntity = new FileEntity();
-        fileEntity.setFileName(name);
+        fileEntity.setFileName(filename);
         fileEntity.setCreatedUser(createdUser);
         fileEntity = fileRepository.save(fileEntity);
         return ResponseEntity.ok(fileEntity);

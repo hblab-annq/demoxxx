@@ -14,6 +14,6 @@ spring:
       max-request-size: 220MB
 
 extern:
-  resoures:
+  resources:
     path: E:/resources/
     Dir: resources
